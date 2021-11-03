@@ -462,3 +462,204 @@ Test
     }
 ```
 
+## 4.配置解析
+
+### 	4.1核心配置文件
+
+- mybatis-config.xml
+
+- Mybatis配置文件包含了会深深影响Mybatis行为的设置和属性信息
+
+  ```XML
+  configuration（配置）
+  properties（属性）
+  settings（设置）
+  typeAliases（类型别名）
+  typeHandlers（类型处理器）
+  objectFactory（对象工厂）
+  plugins（插件）
+  environments（环境配置）
+  environment（环境变量）
+  transactionManager（事务管理器）
+  dataSource（数据源）
+  databaseIdProvider（数据库厂商标识）
+  mappers（映射器）
+  ```
+
+  
+
+### 4.2环境配置(environments)
+
+Mybatis可以配置适应多种文件
+
+不过要记住，尽管可以配置多个环境，但是每个SqlSessionFactory实例只能选择一个环境
+
+会使用和配置环境
+
+Mybatis默认的事务管理器就是JDBC还有一个无用的MANAGED
+
+连接池POOLED
+
+
+
+### 4.3属性（properties）
+
+我们可以通过properties属性来实现引用配置文件
+
+这些属性都是可以外部配置且可以动态替换的，既可以在典型的java属性文件中配置，亦可以通过properties元素的子元素来传递{db.properties}
+
+```properties
+driver = com.mysql.jdbc.Driver
+url = jdbc:mysql://localhost:3306/mybatis?useSSL=true&useUnicode=true&characterEncoding=UTF-8
+username = root
+password = 12345
+```
+
+在核心配置文件中引入
+
+```JAVA
+ <!-- 引入外部配置文件-->
+    <properties resource="db.properties">
+        <property name="username" value="root"/>
+        <property name="pwd" value="11111"/>
+    </properties>
+```
+
+- 可以直接引入外部文件
+- 可以在其中增加一些属性配置
+- 如果两个文件由同一个字段，优先使用外部配置文件的
+
+
+
+### 4.4类型别名（typeAliases）
+
+- 类型别名可为 Java 类型设置一个缩写名字。
+
+- 它仅用于 XML 配置，意在降低冗余的全限定类名书写。
+
+  ```JAVA
+   <!--可以给实体类起别名-->
+      <typeAliases>
+          <typeAlias type="com.scy.pojo" alias="User"></typeAlias>
+      </typeAliases>
+  ```
+
+  也可以指定一个包名，MyBatis 会在包名下面搜索需要的 Java Bean，比如：扫描实体类的包，它的默认别名就是这个类的类名，首字母小写
+
+  ```JAVA
+  <typeAliases>
+    <package name="com.scy.pojo"/>
+  </typeAliases>
+  ```
+
+  在实体类比较少的时候，使用第一种方式
+
+  如果实体类十分多，建议使用第二种
+
+  第一种可以DIY别名，第二种则不行，如果非要改，需要在实体类上添加注解
+
+  @Alias("user")
+
+  public class User{}
+
+### 4.5设置
+
+![](C:\Users\Jack\Desktop\123456.png)
+
+### 4.6其他设置
+
+- [typeHandlers（类型处理器）](https://mybatis.org/mybatis-3/zh/configuration.html#typeHandlers)
+
+- [objectFactory（对象工厂）](https://mybatis.org/mybatis-3/zh/configuration.html#objectFactory)
+
+- [plugins（插件）](https://mybatis.org/mybatis-3/zh/configuration.html#plugins)
+
+  ​		1.mybatis-generator-core
+
+  ​		2.mybatis-plus
+
+  ​		3.通用mapper
+
+
+
+
+
+### 4.7映射器(mapper)
+
+MapperRegistty:注册绑定我们的Mapper文件
+
+​	方式一：[推荐使用]
+
+```JAVA
+<!-- 每一个Mapper.XML都需要在Mybatis核心文件中注册--> 
+<mappers>
+        <mapper resource="com/scy/dao/UserMapper.xml"/>
+    </mappers>
+```
+
+方式二：使用class文件绑定注册
+
+```XML
+<!-- 使用映射器接口实现类的完全限定类名 -->
+<mappers>
+  <mapper class="com.scy.dao.User"/>
+</mappers>
+```
+
+注意点
+
+- 接口和他的Mapper配置文件必须同名
+
+- 接口和他的Mapper配置文件必须在同一个包下
+
+  ```XML
+  <mappers>
+    <package name="com.scy.dao"/>
+  </mappers>
+  ```
+
+注意点
+
+- 接口和他的Mapper配置文件必须同名
+- 接口和他的Mapper配置文件必须在同一个包下
+
+
+
+### 4.8生命周期和作用域
+
+生命周期和作用域是至关重要的，因为错误使用会导致严重的**并发问题**
+
+![](F:\邵辰宇\1234567.png)
+
+#### SqlSessionFactoryBuilder
+
+- 一旦创建了 SqlSessionFactoryBuilder，就不再需要它了
+
+- 局部变量
+
+
+
+#### SqlSessionFactory
+
+- 可以想象为，数据库连接池
+
+- sqlSessionFactory 一旦被创建就应该在应用的运行期间一直存在，**没有任何理由丢弃它或重新创建另一个实例**。
+
+- 因此 SqlSessionFactory 的最佳作用域是应用作用域。
+
+- 有很多方法可以做到，最简单的就是使用**单例模式**或者静态单例模式。
+
+
+
+#### SqlSession
+
+- 连接到连接池的一个请求
+
+- SqlSession 的实例不是线程安全的，因此是不能被共享的，所以它的最佳的作用域是请求或方法作用域。
+
+- 用完之后迅速关闭，否则资源被占用
+
+  ![](F:\邵辰宇\12345678.png)
+
+**每一个Mapper，对应一个业务**
+
